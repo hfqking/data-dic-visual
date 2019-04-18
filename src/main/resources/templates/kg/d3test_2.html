@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!--import d3 version 5-->
+
+    <script type="text/javascript" src="../../static/js/d3.min.js"></script>
+    <!--import jquery3.3.1-->
+    <script type="text/javascript" src="../../static/js/jquery.min.js"></script>
+
+</head>
+<body>
+<p>dog</p>
+<p>cat</p>
+<p>pig</p>
+
+<script>
+    var dataset = ["so cute","cute","fat"];
+    var p = d3.select("body")
+        .selectAll("p");
+
+    p.data(dataset)
+        .text(function(d,i){
+            return "第"+i+"个动物"+d;
+        });
+</script>
+
+
+
+</body>
+</html>

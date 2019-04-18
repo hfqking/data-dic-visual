@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!--import d3 version 5-->
+
+    <script type="text/javascript" src="../../static/js/d3.min.js"></script>
+    <!--import jquery3.3.1-->
+    <script type="text/javascript" src="../../static/js/jquery.min.js"></script>
+
+</head>
+<body>
+<!--svg画布 svg绘制的是矢量图-->
+<svg width="960" height="600"></svg>
+<script>
+    var marge = {top:60,bottom:60,left:60,right:60}//设置边距
+    var dataset = [ 250 , 210 , 170 , 130 , 90 ];  //数据（表示矩形的宽度）
+    var svg = d3.select("svg");//得到svg画布
+    var g = svg.append("g")//定义一个用来装整个图表的一个分组，并设置他的位置
+        .attr("transform","translate("+marge.top+","+marge.left+")");
+
+    var rectHeight = 30;//设置每一个矩形的高度
+
+    /*
+    g.selectAll("rect")
+    .data(dataset)
+    .enter()
+    .append("rect") 我们在前面已经学过这段话表示添加足够的rect元素（也就是enter的用法）
+    */
+    g.selectAll("rect")
+        .data(dataset)
+        .enter()
+        .append("rect")  /*rect元素：是d3中在svg中绘制矩形的元素*/
+        .attr("x",20)//设置左上点的x
+        .attr("y",function(d,i){//设置左上点的y
+            return i*rectHeight;
+        })
+        .attr("width",function(d){//设置宽
+            return d;
+        })
+        .attr("height",rectHeight-5)//设置长
+        .attr("fill","blue");//颜色填充
+</script>
+</body>
+</html>

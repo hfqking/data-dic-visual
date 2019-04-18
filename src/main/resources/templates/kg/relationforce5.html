@@ -1,0 +1,475 @@
+<html>
+<head>
+    <meta charset="utf-8">  
+    <title>Force</title>  
+  <style>
+
+.nodetext {
+    font-size: 12px;
+    font-family: SimSun;
+    fill:#000000;
+}
+
+.linetext {
+    font-size: 12px ;
+    font-family: SimSun;
+    fill:#1f77b4;
+    fill-opacity:0.0;
+}
+
+.circleImg {
+  /*stroke: #ff7f0e;*/
+  stroke-width: 1.5px;
+}
+
+input{
+    width: 200px;
+    height: 34px;
+}
+label{
+    cursor:pointer;
+}
+button{
+    border-color: #1E9FFF;
+    background-color: #1E9FFF;
+    color: #fff;
+    width: 100px;
+    height:36px;
+}
+.pop{
+   
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background-color: #fff;
+    -webkit-background-clip: content;
+    border-radius: 2px;
+    box-shadow: 1px 1px 50px rgba(0,0,0,.3);
+    display: none;
+}
+.pop1{
+    width: 800px;
+    height: 400px;
+}
+.pop2{
+    width: 400px;
+    height: 300px;
+}
+.layer-title{
+    padding-left: 20px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #333;
+    overflow: hidden;
+    background-color: #F8F8F8;
+    border-radius: 2px 2px 0 0;
+}
+.layer-content{
+    padding-left: 20px;
+    padding-right: 20px;
+}
+.layer-foot{
+    position: absolute;
+    bottom: 10px;
+    width: 92%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.pop .layer-content input{
+    width: 130px;
+    height:24px;
+    border: none;
+    border-bottom: 1px  solid #000;
+}
+.pop button{
+    border-color: #1E9FFF;
+    background-color: #1E9FFF;
+    color: #fff;
+    width: 100px;
+    height:36px;
+}
+.pop a{
+    display: inline-block;
+    height: 32px;
+    line-height: 32px;
+    padding: 0 18px;
+    background-color: #009688;
+    color: #fff;
+    white-space: nowrap;
+    text-align: center;
+    font-size: 14px;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    margin-left: 20px;
+}
+
+.clearfix:after {
+  content: ".";
+  display: block;
+  height: 0;
+  visibility: hidden;
+  clear: both;
+}
+.clearfix {
+  zoom: 1;
+  margin-bottom: 10px;
+}
+#app  label, #app input{
+    float:left;
+}
+#app a{
+    float:right;
+}
+.yes{
+    float:left;
+}
+.no{
+   float:right; 
+}
+</style>
+</head> 
+
+    <body> 
+        <form action="" id="table_form" >
+            <label for="">表名称：</label><input type="text" id="table_name">
+            <button type="submit" id="query">查询</button>
+        </form> 
+        <div class="pop  pop1">
+            <div class="layer-title"><h3>对。。。进行编辑</h3></div>
+            <form action=""  class="layer-content" id="del_form" >
+                <div id="app" >
+                     <label for="" >和关系：</label><input type="text" value="">
+                     <a class="del-btn" >删除</a>
+                </div>
+                 <div  style="text-align: center;">
+                     <a class="add-btn" >点击添加节点</a>
+                 </div>
+            </form>
+            
+            <div class="layer-foot">
+                <button class="yes" >确定</button>
+                <button class="no">取消</button>
+            </div>
+        </div>
+        <div class="pop  pop2">
+            <div class="layer-title"><h3>添加节点</h3></div>
+            <form action=""  class="layer-content" id="add_form" >
+                <div>
+                     <label for="" >节点名称</label><input type="text" value=""><br>
+                     
+                </div> 
+                <div>
+                    <label for="" >节点关系</label><input type="text" value=""><br>
+                </div>     
+            </form>
+            <div class="layer-foot">
+                <button class="yes" type="submit"  onclick="$('#add_form').submit();">确定</button>
+                <button class="no">取消</button>
+            </div>
+        </div>
+        <script src="../../static/js2/d3.min.js" charset="utf-8"></script>
+        <script src="../../static/js2/jquery.min.js"></script>
+        <script src="../../static/js2/template-web.js"></script>
+        <script> 
+        var width = (document.body.clientWidth)* 0.9;
+        var height = (window.screen.availHeight) *0.8;
+        var img_w = 20;
+        var img_h = 20;
+        var radius = 10;    //圆形半径
+
+        var svg = d3.select("body").append("svg")
+                                .attr("width",width)
+                                .attr("height",height);
+
+function updatesvg(soursefile){
+        d3.json(soursefile,function(error,root){
+
+            if( error ){
+                return console.log(error);
+            }
+            console.log(root);
+            console.log((root.nodes)[0]);
+    root.edges.forEach(function(e){
+     let sourceNode = root.nodes.filter(function(n){
+      /*  alert("源："+e.from+'----'+e.to);*/
+        if((n.table_name !== undefined) && (n.table_name !== null) && (n.table_name !== '')){
+                    return n.id === e.source;
+                }
+                else if((n.num !== undefined) && (n.num !== null) && (n.num !== '')){
+                    return n.num === e.source;
+                }
+            })[0];
+    let targetNode = root.nodes.filter(function(n){
+        if((n.table_name !== undefined) && (n.table_name !== null) && (n.table_name !== '')){
+                    return n.id === e.target;
+                }
+                else if((n.num !== undefined) && (n.num !== null) && (n.num !== '')){
+                    return n.id === e.target;
+                }
+            })[0];
+     let sourceName = root.nodes.filter(function(n){
+      /*  alert("源："+e.from+'----'+e.to);*/
+        if((n.table_name !== undefined) && (n.table_name !== null) && (n.table_name !== '')){
+                    return n.id === e.source;
+                }
+                else if((n.num !== undefined) && (n.num !== null) && (n.num !== '')){
+                    return n.num === e.source;
+                }
+            })[0];
+            // alert(JSON.stringify(sourceName)); 
+      e.source = sourceNode;
+      e.target = targetNode;
+      e.sourceName = sourceNode.table_name
+   });
+            //D3力导向布局
+            var force = d3.layout.force()
+                            .nodes(root.nodes)
+                            .links(root.edges)
+                            .size([width,height])
+                            .linkDistance(100)
+                            .charge(-200)
+                            .start();
+
+            //边             
+            var edges_line = svg.selectAll("line")
+                                .data(root.edges)
+                                .enter()
+                                .append("line")
+                                .style("stroke","#ccc")
+                                .style("stroke-width",1)
+                                // .on("mouseover",function(d){
+                                //     alert(2);
+                                // });
+
+            var color = d3.scale.category20();       
+
+            //边上的文字（人物之间的关系）            
+            var edges_text = svg.selectAll(".linetext")
+                                .data(root.edges)
+                                .enter()
+                                .append("text")
+                                .attr("class","linetext")
+                                .text(function(d){
+                                    return d.relation;       
+                                });
+
+
+            // 圆形图片节点（人物头像）
+            var nodes_img = svg.selectAll("image")
+                                .data(root.nodes)
+                                .enter()
+                                .append("circle")
+                                .attr("class", "circleImg")
+                                .attr("r", radius)
+                                .attr("fill", function(d, i){
+
+                                      return color(i);  
+                                })
+                                .on("dblclick",function(d){
+                                    var clickNodeName = d.table_name;//点击节点的名字
+                                    var clickId=d.id
+                                    console.log(clickId);
+                                    console.log(clickNodeName);
+                                    $(".pop1 .layer-title h3").html("对"+clickNodeName+"进行编辑");
+                                
+                                    edges_text.style("fill-opacity",function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            console.log(edges_text.text());
+                                            console.log(edge.source);
+                                            return 1.0;
+                                        }
+                                    });
+                                    var  arr=[];
+                                    root.edges.forEach(function(e){
+                                                          
+                                        if( e.target.id === d.id ){
+                                              arr.push(e.source.table_name+':'+e.relation+':f_s'+':'+clickNodeName);
+                                              
+                                        }
+                                        else if(e.source.id === d.id){
+                                          arr.push(e.target.table_name+':'+e.relation+':f_t'+':'+clickNodeName);
+                                         
+                                        }
+                                    })
+                                    console.log(arr);
+                                    var  content = template( "model" , {arr:arr});
+                                    $("#app").html(content);
+                                    $(".pop1").show();
+                                })
+                                .on("mouseover",function(d,i){
+                                    //显示连接线上的文字
+                                    console.log(d);
+                                    console.log(i);
+                                    edges_text.style("fill-opacity",function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            return 1.0;
+                                        }
+                                    });
+
+                                    //连接线加粗
+                                    edges_line.style('stroke-width', function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            return '2px';
+                                        }else{
+                                            return '1px';
+                                        }
+                                    }).style('stroke', function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            return '#000';
+                                        }else{
+                                            return '#ddd';
+                                        }
+                                    });
+                                })
+                                .on("mouseout",function(d,i){
+                                    //隐去连接线上的文字
+                                    edges_text.style("fill-opacity",function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            return 0.0;
+                                        }
+                                    });
+
+                                    //连接线减粗
+                                    edges_line.style('stroke-width', function(edge){
+                                    if( edge.source === d || edge.target === d ){
+                                            return '1px';
+                                     }else{
+                                          return '1px';
+                                     }
+                                    }).style('stroke', function(edge){
+                                    if( edge.source === d || edge.target === d ){
+                                        return '#ddd';
+                                    }else{
+                                        return '#ddd';
+                                    }
+                                    });
+                                })
+
+                                .call(force.drag);
+
+            var text_dx = -20;
+            var text_dy = 20;
+
+            var nodes_text = svg.selectAll(".nodetext")
+                                .data(root.nodes)
+                                .enter()
+                                .append("text")
+                                .attr("class","nodetext")
+                                .attr("dx",text_dx)
+                                .attr("dy",text_dy)
+                                .text(function(d){
+                                    return d.table_name;
+                                });
+
+
+            force.on("tick", function(){
+
+                //限制结点的边界
+                root.nodes.forEach(function(d,i){
+                    d.x = d.x - img_w/2 < 0     ? img_w/2 : d.x ;
+                    d.x = d.x + img_w/2 > width ? width - img_w/2 : d.x ;
+                    d.y = d.y - img_h/2 < 0      ? img_h/2 : d.y ;
+                    d.y = d.y + img_h/2 + text_dy > height ? height - img_h/2 - text_dy : d.y ;
+                });
+
+                //更新连接线的位置
+                 edges_line.attr("x1",function(d){ return d.source.x; });
+                 edges_line.attr("y1",function(d){ return d.source.y; });
+                 edges_line.attr("x2",function(d){ return d.target.x; });
+                 edges_line.attr("y2",function(d){ return d.target.y; });
+
+                 //更新连接线上文字的位置
+                 edges_text.attr("x",function(d){ return (d.source.x + d.target.x) / 2 ; });
+                 edges_text.attr("y",function(d){ return (d.source.y + d.target.y) / 2 ; });
+
+
+                 //更新结点图片和文字
+                 nodes_img.attr("cx",function(d){ return d.x });
+                 nodes_img.attr("cy",function(d){ return d.y });
+ 
+                 nodes_text.attr("x",function(d){ return d.x + radius/2});
+                 nodes_text.attr("y",function(d){ return d.y + img_w/2; });
+            });
+        });
+
+} 
+    // updatesvg("1.json");
+    //     updatesvg("getgraph");
+        updatesvg("/kg/getgraph");
+    var myform=document.getElementById('table_form');
+    // 查询
+    $("#query").on("click",function(){
+            // var t_name= $('#table_name').val();
+            $.ajax({
+                 type: 'post',
+                 url: '',
+                 data: $("#table_form").serialize(),
+                 success: function(data) {
+                      d3.select('svg')
+                        .selectAll('*')
+                        .remove();   
+                        updatesvg("1.json");
+                }
+            });     
+    });
+
+$(".yes").click(function(){
+    $(".pop").hide();
+})
+// //点击任意部位隐藏
+$(".no").click(function(){
+    $(".pop").hide();
+})
+// 点击删除
+$("#app").on("click", ".del-btn",function(){
+    var a1 = $(this).siblings(".w1").val();
+    var a2 = $(this).siblings(".w2").val();
+    var a3 = $(this).siblings(".w3").val();
+    // console.log(a1);
+    
+    disp_confirm(a1,a2,a3);
+})
+
+function disp_confirm(d1,d2,d3){
+    var r=confirm("确定要删除吗？");
+    if(r==true){
+         $(this).parent().hide();
+         $.post('//remove',{d1:d1,d2:d2,d3:d3}, success , "jsonp");
+         function success(data){
+            d3.select('svg').selectAll('*').remove(); 
+            updatesvg('1.json');
+         }
+    }else{
+        return false;
+    }
+}
+// 添加
+$(".add-btn").click(function(){
+    $(".pop2").show();
+    $.ajax({
+                 type: 'post',
+                 url: '',
+                 data: $("#add_form").serialize(),
+                 success: function(data) {
+                      d3.select('svg')
+                        .selectAll('*')
+                        .remove();   
+                        updatesvg("1.json");
+                }
+            });     
+    })
+
+</script>
+
+<script  type="text/template"  id="model">
+{{each arr v i }}
+    <div class="clearfix">
+        <label for="" >和<input type="text" value="{{v.split(":")[0]}}" class="w1">关系：</label><input type="text" value="{{v.split(":")[1]}}" class="w2">
+        <a class="del-btn" >删除</a><input type="text" value="{{v.split(":")[2]}}" class="w3" style="display:none">
+    </div>
+{{/each}}
+</script>      
+</body>
+</html>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <!--import d3 version 5-->
+
+    <script type="text/javascript" src="../../static/js/d3.min.js"></script>
+    <!--import jquery3.3.1-->
+    <script type="text/javascript" src="../../static/js/jquery.min.js"></script>
+
+</head>
+<body>
+<p>dog</p>
+<p>cat</p>
+<p>pig</p>
+
+<script>
+    var str = "is an animal";//新建一个字符串
+    var p = d3.select("body")
+        .selectAll("p");
+
+    p.datum(str)//绑定
+        .text(function(d,i){
+            return "第"+i+"个元素"+d;
+        });
+</script>
+
+
+</body>
+</html>

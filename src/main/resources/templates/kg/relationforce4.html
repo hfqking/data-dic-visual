@@ -1,0 +1,395 @@
+<html>
+<head>
+    <meta charset="utf-8">  
+    <title>Force</title>  
+  <style>
+
+.nodetext {
+    font-size: 12px ;
+    font-family: SimSun;
+    fill:#000000;
+}
+
+.linetext {
+    font-size: 12px ;
+    font-family: SimSun;
+    fill:#1f77b4;
+    fill-opacity:0.0;
+}
+
+.circleImg {
+  /*stroke: #ff7f0e;*/
+  stroke-width: 1.5px;
+}
+input{
+    width: 200px;
+    height: 34px;
+}
+label{
+    cursor:pointer;
+}
+button{
+    border-color: #1E9FFF;
+    background-color: #1E9FFF;
+    color: #fff;
+    width: 100px;
+    height:36px;
+}
+.pop{
+    width: 400px;
+    height: 300px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background-color: #fff;
+    -webkit-background-clip: content;
+    border-radius: 2px;
+    box-shadow: 1px 1px 50px rgba(0,0,0,.3);
+    display: none;
+}
+.layer-title{
+    /*padding: 0 80px 0 20px;
+    height: 42px;
+    line-height: 42px;*/
+    padding-left: 20px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #333;
+    overflow: hidden;
+    background-color: #F8F8F8;
+    border-radius: 2px 2px 0 0;
+}
+.layer-content{
+    padding-left: 20px;
+}
+.layer-foot{
+    position: absolute;
+    bottom: 10px;
+    width: 92%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+.pop .layer-content input{
+    width: 100px;
+    height:24px;
+    border: none;
+    border-bottom: 1px  solid #000;
+}
+.pop button{
+    border-color: #1E9FFF;
+    background-color: #1E9FFF;
+    color: #fff;
+    width: 100px;
+    height:36px;
+}
+.yes{
+    float:left;
+}
+.no{
+   float:right; 
+}
+</style>
+</head> 
+
+    <body> 
+        <form action="" id="table_form">
+            <label for="">表名称：</label><input type="text" id="table_name">
+            <button type="submit" id="query">查询</button>
+        </form> 
+        <div class="pop">
+            <div class="layer-title"><h3>对。。。进行编辑</h3></div>
+            <form class="layer-content">
+                <label for="">和aa关系：</label><input type="text" value="父子"><br>
+                <label for="">和bb关系：</label><input type="text" value="父子"><br>
+            </form>
+            <div class="layer-foot">
+                <button class="yes">确定</button>
+                <button class="no">取消</button>
+            </div>
+        </div>
+        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+        <script src="https://static.inertiabiotech.com/timegenes/js/jquery.min.js"></script>
+        <script>           
+        
+        var width = 900;
+        var height = 800;
+        var img_w = 30;
+        var img_h = 30;
+        var radius = 15;    //圆形半径
+
+        var svg = d3.select("body").append("svg")
+                                .attr("width",width)
+                                .attr("height",height);
+
+function updatesvg(soursefile){
+        d3.json(soursefile,function(error,root){
+
+            if( error ){
+                return console.log(error);
+            }
+            console.log(root);
+            console.log((root.nodes)[0]);
+   root.edges.forEach(function(e){
+     let sourceNode = root.nodes.filter(function(n){
+      /*  alert("源："+e.from+'----'+e.to);*/
+        if((n.name !== undefined) && (n.name !== null) && (n.name !== '')){
+                    return n.id === e.source;
+                }
+                else if((n.num !== undefined) && (n.num !== null) && (n.num !== '')){
+                    return n.num === e.source;
+                }
+            })[0];
+    let targetNode = root.nodes.filter(function(n){
+        if((n.name !== undefined) && (n.name !== null) && (n.name !== '')){
+                    return n.id === e.target;
+                }
+                else if((n.num !== undefined) && (n.num !== null) && (n.num !== '')){
+                    return n.id === e.target;
+                }
+            })[0];
+           
+      e.source = sourceNode;
+      e.target = targetNode;
+    //  e.title=e.from+'----'+e.to;
+   //   alert(e.target);
+   });
+            //D3力导向布局
+            var force = d3.layout.force()
+                            .nodes(root.nodes)
+                            .links(root.edges)
+                            .size([width,height])
+                            .linkDistance(200)
+                            .charge(-1500)
+                            .start();
+
+            //边             
+            var edges_line = svg.selectAll("line")
+                                .data(root.edges)
+                                .enter()
+                                .append("line")
+                                .style("stroke","#ccc")
+                                .style("stroke-width",1)
+                                // .on("mouseover",function(d){
+                                //     alert(2);
+                                // });
+
+            var color = d3.scale.category20();       
+
+            //边上的文字（人物之间的关系）            
+            var edges_text = svg.selectAll(".linetext")
+                                .data(root.edges)
+                                .enter()
+                                .append("text")
+                                .attr("class","linetext")
+                                .text(function(d){
+                                    return d.relation;       
+                                });
+
+
+            // 圆形图片节点（人物头像）
+            var nodes_img = svg.selectAll("image")
+                                .data(root.nodes)
+                                .enter()
+                                .append("circle")
+                                .attr("class", "circleImg")
+                                .attr("r", radius)
+                                .attr("fill", function(d, i){
+
+                                      return color(i);  
+                                })
+                                .on("dblclick",function(d){
+                                //双击节点删除，获取选中节点的在json中的name的值
+                                // d3.select(this).remove();
+                                edges_text.style("fill-opacity",function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            console.log(edges_text.text());
+
+                                            return 1.0;
+                                        }
+                                    });
+                                var clickNodeName = d.name;//点击节点的名字
+                                console.log(clickNodeName);
+                                 $(".layer-title h3").html("对"+clickNodeName+"进行编辑");
+                                $.post('http://test.uniskin.com.cn/mall/member/Cart/remove',{'id':clickNodeName},success,"jsonp");
+                                function success(data){
+                                    console.log(data);
+                                    for(var i=0;i<data.length;i++){
+                                        $(".layer-content").html('<label for="">和'+data[i].NodeName+'关系：</label><input type="text" value="clickNodeName"><br>');
+                                    }
+                                }
+                                $(".pop").show();
+                                })
+                                .on("mousedown",function(e){
+                                    document.oncontextmenu=function(){
+                                        return false;
+                                    }
+                                    var key=e.which;
+                                    if(key==3){
+                                        $(".pop").show();
+                                    }
+                                })
+                                .on("mouseover",function(d,i){
+                                    //显示连接线上的文字
+                                    edges_text.style("fill-opacity",function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            return 1.0;
+                                        }
+                                    });
+
+                                    //连接线加粗
+                                    edges_line.style('stroke-width', function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            return '2px';
+                                        }else{
+                                            return '1px';
+                                        }
+                                    }).style('stroke', function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            return '#000';
+                                        }else{
+                                            return '#ddd';
+                                        }
+                                    });
+                                })
+                                .on("mouseout",function(d,i){
+                                    //隐去连接线上的文字
+                                    edges_text.style("fill-opacity",function(edge){
+                                        if( edge.source === d || edge.target === d ){
+                                            return 0.0;
+                                        }
+                                    });
+
+                                    //连接线减粗
+                                    edges_line.style('stroke-width', function(edge){
+                                    if( edge.source === d || edge.target === d ){
+                                            return '1px';
+                                     }else{
+                                          return '1px';
+                                     }
+                                    }).style('stroke', function(edge){
+                                    if( edge.source === d || edge.target === d ){
+                                        return '#ddd';
+                                    }else{
+                                        return '#ddd';
+                                    }
+                                    });
+                                })
+
+                                .call(force.drag);
+
+
+
+
+            var text_dx = -20;
+            var text_dy = 20;
+
+            var nodes_text = svg.selectAll(".nodetext")
+                                .data(root.nodes)
+                                .enter()
+                                .append("text")
+                                .attr("class","nodetext")
+                                .attr("dx",text_dx)
+                                .attr("dy",text_dy)
+                                .text(function(d){
+                                    return d.name;
+                                });
+
+
+            force.on("tick", function(){
+
+                //限制结点的边界
+                root.nodes.forEach(function(d,i){
+                    d.x = d.x - img_w/2 < 0     ? img_w/2 : d.x ;
+                    d.x = d.x + img_w/2 > width ? width - img_w/2 : d.x ;
+                    d.y = d.y - img_h/2 < 0      ? img_h/2 : d.y ;
+                    d.y = d.y + img_h/2 + text_dy > height ? height - img_h/2 - text_dy : d.y ;
+                });
+
+                //更新连接线的位置
+                 edges_line.attr("x1",function(d){ return d.source.x; });
+                 edges_line.attr("y1",function(d){ return d.source.y; });
+                 edges_line.attr("x2",function(d){ return d.target.x; });
+                 edges_line.attr("y2",function(d){ return d.target.y; });
+
+                 //更新连接线上文字的位置
+                 edges_text.attr("x",function(d){ return (d.source.x + d.target.x) / 2 ; });
+                 edges_text.attr("y",function(d){ return (d.source.y + d.target.y) / 2 ; });
+
+
+                 //更新结点图片和文字
+                 nodes_img.attr("cx",function(d){ return d.x });
+                 nodes_img.attr("cy",function(d){ return d.y });
+
+                 nodes_text.attr("x",function(d){ return d.x + radius/2});
+                 nodes_text.attr("y",function(d){ return d.y + img_w/2; });
+            });
+        });
+
+}
+        updatesvg("/kg/getgraph");
+        var myform=document.getElementById('table_form');
+        $("#query").on("click",function(){
+                myform.submit();
+                // var num1 =$(".input1").val();
+                // var num2 =$(".input2").val();
+                        d3.select('svg')
+                        .selectAll('*')
+                        .remove();   
+                        updatesvg("relation2.json");
+                        // location.reload();
+                        // alert("ff");
+                // $.post('http://test.uniskin.com.cn/mall/member/Cart/update/',{v1:num1, v2:num2}, success , "jsonp");
+                // function success(data){
+                //     console.log(data);
+                //     if (data){
+                //         updatesvg("relation2.json");
+                //         return  false;
+                //     }else{
+                //         alert("操作失败!");
+                //     }
+                   
+                // } 
+            });
+    
+            // $("svg").bind("contextmenu", function(){
+            //     alert("点击了右键");
+            //     return false;
+            // });
+
+
+
+// 按下鼠标
+// $(document).mousedown(function(e){
+//     //屏蔽浏览器右键菜单
+//    document.oncontextmenu = function(){
+    
+//     return false;
+ 
+//    }
+    
+//     var key = e.which; //获取鼠标键位
+//     if(key == 3)  //(1:代表左键； 2:代表中键； 3:代表右键)
+//     {
+//         //获取右键点击坐标
+//         var x = e.clientX;
+//         var y = e.clientY;
+        
+//         // $(".pop").show().css({left:x,top:y});
+//         $(".pop").show();
+
+//     }
+// });
+ $(".yes").click(function(){
+
+    $(".pop").hide();
+})
+// //点击任意部位隐藏
+$(".no").click(function(){
+    $(".pop").hide();
+})
+
+</script>  
+
+</body>
+</html>
